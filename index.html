@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>RabbitMQ Web STOMP plaground</title>
+    <script></script>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1"
+      charset="UTF-8"
+    />
+  </head>
+
+  <body>
+    <h1>Web Stomp Test</h1>
+    <form id="connectForm">
+      <h2>Connect</h2>
+      <label
+        >Web Stomp Server Hostname:
+        <input
+          type="text"
+          id="webStompHostname"
+          value="mq2.ubivis.io"
+        /> </label
+      ><br />
+      <label
+        >Web Stomp Port:
+        <input type="text" id="webStompPort" value="25671" /> </label
+      ><br />
+      <input type="checkbox" id="useTls" value="useTls" checked />
+      <label for="useTls">Use TLS</label><br />
+      <label
+        >Web Stomp User Name:
+        <input type="text" id="webStompUser" value="tiago" /> </label
+      ><br />
+      <label
+        >Web Stomp Password:
+        <input type="text" id="webStompPassword" value="tiago" /> </label
+      ><br />
+      <label>Virtual Host: <input type="text" id="vhost" value="/" /> </label
+      ><br />
+      <button type="button" id="webStompConnect">Connect!</button><br /><br />
+    </form>
+
+    <form id="subForm">
+      <h2>Subscribe</h2>
+      <label>
+        <div class="tooltip">
+          Destination
+          <span class="tooltiptext">
+            Se quiser dar subscribe em uma default exchange /queue/queuename<br /><br />
+            Subscribe na amq.topic com uma routing_key /topic/routing_key<br />
+            ou /exchange/amq.topic/routing_key<br /><br />
+            Para dar subscribe em alguma exchange específica
+            /exchange/exchange_name[/routing_key]
+          </span>
+        </div>
+        :
+        <input type="text" id="subDestination" /> </label
+      ><br />
+      <label>
+        <div class="tooltip">
+          Durable (persistent)
+          <span class="tooltiptext">
+            A fila sobrevive em caso de reset do servidor RabbitMQ. Os metadados
+            da fila são salvos no HD.
+          </span>
+        </div>
+        :
+        <select id="subDurable">
+          <option value=""></option>
+          <option value="true">True</option>
+          <option value="false">False</option>
+        </select> </label
+      ><br />
+      <label>
+        <div class="tooltip">
+          Exclusive
+          <span class="tooltiptext">
+            A fila só pode ser usada (consumir, purge, delete, etc) pela mesma
+            conexão que a criou. Tentativas de modificar essa fila por outras
+            conexões resultam em exception no canal do tipo RESOURCE_LOCKET com
+            a mensagem "cannot obtain exclusive access to locked queue"
+          </span>
+        </div>
+        :
+        <select id="subExclusive">
+          <option value=""></option>
+          <option value="true">True</option>
+          <option value="false">False</option>
+        </select> </label
+      ><br />
+      <label>
+        <div class="tooltip">
+          Autodelete
+          <span class="tooltiptext">
+            Queue that has had at least one consumer is deleted when last
+            consumer unsubscribes
+          </span>
+        </div>
+        :
+        <select id="subAutodelete">
+          <option value=""></option>
+          <option value="true">True</option>
+          <option value="false">False</option>
+        </select> </label
+      ><br />
+      <details>
+        <summary>Advanced parameters</summary>
+        <label>
+          <div class="tooltip">
+            prefetch-count
+            <span class="tooltiptext"
+              >Limits the number of unacked messages read by this queue</span
+            >
+          </div>
+          :
+          <input type="number" id="prefetchCount" /> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            x-queue-name
+            <span class="tooltiptext">
+              Força o RabbitMQ a criar uma fila com o nome desejado.
+            </span>
+          </div>
+          :
+          <input type="text" id="x-queue-name" /> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            x-queue-type
+            <span class="tooltiptext"
+              >alternar entre classic e quorum (apenas para RabbitMQ em modo
+              cluster)</span
+            >
+          </div>
+          :
+          <select id="x-queue-type">
+            <option value=""></option>
+            <option value="classic">classic</option>
+            <option value="quorum">quorum</option>
+          </select> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            x-dead-letter-exchange
+            <span class="tooltiptext">
+              O nome da exchange de dead-letter.
+            </span>
+          </div>
+          :
+          <input type="text" id="x-dead-letter-exchange" /> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            x-dead-letter-routing-key
+            <span class="tooltiptext">
+              A routing key do x-dead-letter
+            </span>
+          </div>
+          :
+          <input type="text" id="x-dead-letter-routing-key" /> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            x-expires
+            <span class="tooltiptext">
+              describes the expiration period in milliseconds. It must be a
+              positive integer (unlike message TTL it cannot be 0). Thus a value
+              of 1000 means a queue which is unused for 1 second will be
+              deleted.
+            </span>
+          </div>
+          :
+          <input type="text" id="x-expires" /> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            x-message-ttl
+            <span class="tooltiptext">
+              A message that has been in the queue for longer than the
+              configured TTL is said to be dead.<br />
+              The value of the TTL argument or policy must be a non-negative
+              integer (0 <= n), describing the TTL period in milliseconds. Thus
+              a value of 1000 means that a message added to the queue will live
+              in the queue for 1 second or until it is delivered to a
+              consumer.<br />
+              When both a per-queue and a per-message TTL are specified, the
+              lower value between the two will be chosen.
+            </span>
+          </div>
+          :
+          <input type="number" id="x-message-ttl" /> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            x-max-length
+            <span class="tooltiptext">
+              a fila poderá ter no máximo este número de mensagens acumuladas
+            </span>
+          </div>
+          :
+          <input type="number" id="x-max-length" /> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            x-max-length-bytes
+            <span class="tooltiptext">
+              A fila poderá ter no máximo este número de bytes em mensagens
+              acumuladas
+            </span>
+          </div>
+          :
+          <input type="number" id="x-max-length-bytes" /> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            x-overflow
+            <span class="tooltiptext">
+              quando a fila atingir o limite máximo (seja em quantidade de
+              mensagens ou em bytes), quais mensagens deverão ser jogadas fora?
+              as novas (reject-publish) ou as mais antigas de todas da fila
+              (drop_head)?
+            </span>
+          </div>
+          :
+          <select id="x-overflow">
+            <option value=""></option>
+            <option value="drop-head">drop-head</option>
+            <option value="reject-publish">reject-publish</option>
+          </select> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            x-max-priority
+            <span class="tooltiptext">
+              indica o valor máximo de prioridade que a fila suporta. varia de 1
+              a 255
+            </span>
+          </div>
+          :
+          <input type="number" id="x-max-priority" min="1" max="255" /> </label
+        ><br />
+      </details>
+      <button type="button" id="subButton">Subscribe to topic!</button>
+    </form>
+
+    <form id="pubForm">
+      <h2>Publish</h2>
+      <label>
+        <div class="tooltip">
+          Destination
+          <span class="tooltiptext">
+            Messages published to the default exchange are given the destination
+            /queue/queuename<br /><br />
+            Messages published to amq.topic are given the destination
+            /topic/routing_key<br /><br />
+            All other messages are given the destination
+            /exchange/exchange_name[/routing_key]
+          </span>
+        </div>
+        :
+        <input type="text" id="pubDestination" value="" /> </label
+      ><br />
+      <label>
+        <div class="tooltip">
+          Message<span class="tooltiptext">Tooltip text</span>
+        </div>
+        :
+        <input type="text" id="pubMessage" value="" /> </label
+      ><br />
+      <label>
+        <div class="tooltip">
+          reply-to
+          <span class="tooltiptext">Creates a temp queue</span>
+        </div>
+        :
+        <input type="text" id="pubReplyTo" value="" /> </label
+      ><br />
+      <label>
+        <div class="tooltip">
+          Durable
+          <span class="tooltiptext">Durable</span>
+        </div>
+        :
+        <input type="checkbox" id="pubDurable" /> </label
+      ><br />
+      <label>
+        <div class="tooltip">
+          Exclusive
+          <span class="tooltiptext">Aaaa</span>
+        </div>
+        :
+        <input type="checkbox" id="pubExclusive" /> </label
+      ><br />
+      <label>
+        <div class="tooltip">
+          Autodelete
+          <span class="tooltiptext">
+            Queue that has had at least one consumer is deleted when last
+            consumer unsubscribes
+          </span>
+        </div>
+        :
+        <input type="checkbox" id="pubAutoDelete" /> </label
+      ><br />
+      <label>
+        <div class="tooltip">
+          Persistent
+          <span class="tooltiptext"
+            >Makes this message persistent (will be saved on the hard drive).
+            This ensures the message will be kept safe in case RabbitMQ crashes
+            or restart. This also forces the broker to send publisher
+            confirms.</span
+          >
+        </div>
+        :
+        <input type="checkbox" id="pubPersistent" /> </label
+      ><br />
+      <details>
+        <summary>Advanced parameters</summary>
+        <label>
+          <div class="tooltip">
+            content-type
+            <span class="tooltiptext">Creates a temp queue</span>
+          </div>
+          :
+          <input type="text" id="pubContentType" value="" /> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            content-encoding
+            <span class="tooltiptext">Creates a temp queue</span>
+          </div>
+          :
+          <input type="text" id="pubContentEncoding" value="" /> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            headers
+            <span class="tooltiptext">Creates a temp queue</span>
+          </div>
+          :
+          <input type="text" id="pubHeaders" value="" /> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            delivery-mode
+            <span class="tooltiptext">Creates a temp queue</span>
+          </div>
+          :
+          <input type="text" id="pubDeliveryMode" value="" /> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            priority
+            <span class="tooltiptext">Creates a temp queue</span>
+          </div>
+          :
+          <input type="text" id="replyTo" value="" /> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            correlation-id
+            <span class="tooltiptext">Creates a temp queue</span>
+          </div>
+          :
+          <input type="text" id="replyTo" value="" /> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            expiration
+            <span class="tooltiptext">Creates a temp queue</span>
+          </div>
+          :
+          <input type="text" id="replyTo" value="" /> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            message-id
+            <span class="tooltiptext">Creates a temp queue</span>
+          </div>
+          :
+          <input type="text" id="replyTo" value="" /> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            timestamp
+            <span class="tooltiptext">Creates a temp queue</span>
+          </div>
+          :
+          <input type="text" id="replyTo" value="" /> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            type
+            <span class="tooltiptext">Creates a temp queue</span>
+          </div>
+          :
+          <input type="text" id="replyTo" value="" /> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            user-id
+            <span class="tooltiptext">Creates a temp queue</span>
+          </div>
+          :
+          <input type="text" id="replyTo" value="" /> </label
+        ><br />
+        <label>
+          <div class="tooltip">
+            app-id
+            <span class="tooltiptext">Creates a temp queue</span>
+          </div>
+          :
+          <input type="text" id="replyTo" value="" /> </label
+        ><br />
+      </details>
+      <button type="button" id="webStompPublish">Send message!</button
+      ><br /><br />
+    </form>
+  </body>
+  <script src="src/index.ts"></script>
+</html>
